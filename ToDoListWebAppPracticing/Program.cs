@@ -1,7 +1,16 @@
+using Microsoft.EntityFrameworkCore;
+using ToDoListWebAppPracticing.Models;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// Add EF Core DI
+builder.Services.AddDbContext<ToDoListDbContext>(options =>
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"), sqlServerOptions => sqlServerOptions.EnableRetryOnFailure());
+});
 
 var app = builder.Build();
 

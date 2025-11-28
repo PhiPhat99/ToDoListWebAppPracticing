@@ -1,0 +1,39 @@
+﻿@model ToDoListItems
+
+<section>
+	<div class="container section-padding">
+		<div class="row p-5 border rounded">
+			<h2>New Task</h2>
+
+			<div asp-validation-summary="All" class="text-danger"></div>
+
+			<form asp-action="Add" method="post">
+				<div class="mb-3">
+					<label asp-for="Description" class="form-label">Description</label>
+					<input asp-for="Description" class="form-control" placeholder="เขียนคำอธิบายงาน" />
+				</div>
+
+				<div class="mb-3">
+					<label asp-for="CategoryId" class="form-label">Category</label>
+					<select asp-for="CategoryId" class="form-select" asp-items="@(new SelectList(ViewBag.Categories, "CategoryId", "Name"))">
+						<option value="">เลือกหมวดหมู่ของงาน</option>
+					</select>
+				</div>
+
+				<div class="mb-3">
+					<label asp-for="Duedate" class="form-label">Due Date</label>
+					<input asp-for="Duedate" class="form-control" type="date" placeholder="เลือกวันที่กำหนด" />
+				</div>
+
+				<div class="mb-3">
+					<label asp-for="StatusId" class="form-label">Status</label>
+					<select asp-for="StatusId" class="form-select" asp-items="@(new SelectList(ViewBag.Statuses, "StatusId", "StatusName"))">
+					</select>
+				</div>
+
+				<button type="submit" class="btn btn-primary">Add</button>
+				<a asp-action="Index" class="btn btn-danger">Cancel</a>
+			</form>
+		</div>
+	</div>
+</section>

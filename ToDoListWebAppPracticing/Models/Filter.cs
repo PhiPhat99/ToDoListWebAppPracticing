@@ -20,9 +20,9 @@
         public bool IsStatus => StatusId.ToLower() != "all";
         public static Dictionary<string, string> DueFilterValues => new Dictionary<string, string>
         {
-            { "future", "FUTURE" },
-            { "today", "TODAY" },
-            { "past", "PAST" }
+            { "future", "อนาคต" },
+            { "today", "วันนี้" },
+            { "past", "อดีต" }
         };
 
         public bool IsPast => Due.ToLower() == "past";

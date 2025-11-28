@@ -14,6 +14,7 @@ namespace ToDoListWebAppPracticing.Models
         {
             modelBuilder.Entity<Category>().HasData(
                 new Category { CategoryId = "Work", Name = "งาน" },
+                new Category { CategoryId = "Learning", Name = "เรียนรู้" },
                 new Category { CategoryId = "Personal", Name = "ส่วนตัว" },
                 new Category { CategoryId = "Shopping", Name = "ช็อปปิ้ง" },
                 new Category { CategoryId = "Others", Name = "อื่นๆ" }
@@ -21,7 +22,8 @@ namespace ToDoListWebAppPracticing.Models
             modelBuilder.Entity<Status>().HasData(
                 new Status { StatusId = "Open", StatusName = "เปิด" },
                 new Status { StatusId = "InProgress", StatusName = "กำลังดำเนินการ" },
-                new Status { StatusId = "Completed", StatusName = "เสร็จสิ้น" }
+                new Status { StatusId = "Completed", StatusName = "เสร็จสิ้น" },
+                new Status { StatusId = "Close", StatusName = "ปิด" }
             );
         }
     }

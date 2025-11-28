@@ -1,8 +1,120 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model IEnumerable<ToDoListItems>
+
+@{
+    ViewData["Title"] = "To Do List";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<section>
+    <div class="container section-padding">
+        <div class="row p-5 border rounded">
+            <div class="col-md-2">
+                <!-- filters -->
+                <form asp-action="Filters" method="get">
+                    <!-- filter by category -->
+                    <div class="mb-3">
+                        <label class="form-label">CATEGORY</label>
+                        <select name="filter" class="form-select"
+                                asp-items="@(new SelectList(ViewBag.Categories, "CategoryId", "Name", ViewBag.Filter.CategoryId))">
+                            <option value="all">All</option>
+                        </select>
+                    </div>
+                    <!-- filter by due -->
+                    <div class="mb-3">
+                        <label class="form-label">DUE</label>
+                        <select name="filter" class="form-select"
+                                asp-items="@(new SelectList(ViewBag.DueFilterValues, "Key", "Value", ViewBag.Filter.Due))">
+                            <option value="all">All</option>
+                        </select>
+                    </div>
+                    <!-- filter by status -->
+                    <div class="mb-3">
+                        <label class="form-label">STATUS</label>
+                        <select name="filter" class="form-select"
+                                asp-items="@(new SelectList(ViewBag.Statuses, "StatusId", "StatusName", ViewBag.Filter.StatusId))">
+                            <option value="all">All</option>
+                            </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                    <a asp-action="Index" asp-route-id="" class="btn btn-primary">Clear</a>
+                </form>
+            </div>
+            <div class="col md-10">
+                <form asp-action="DeleteSelected" method="post" asp-route-id="@ViewBag.Filter.FilterString" id="deleteForm">
+                    <table class=" table table-striped mt-2">
+                        <thead class="text-center">
+                            <tr>
+                                <th class="w-1"></th>
+                                <th>Description</th>
+                                <th>Category</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                                <th class="w-25">Remaining</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (ToDoListItems task in Model)
+                            {
+                                string remainingText = "No Due Date";
+                                string cssClass = "";
+
+                                if (task.Duedate.HasValue)
+                                {
+                                    DateTime dueDate = task.Duedate.Value.Date;
+                                    DateTime today = DateTime.Today;
+                                    TimeSpan timeRemaining = dueDate.Subtract(today);
+
+                                    if (timeRemaining.TotalDays > 0)
+                                    {
+                                        int daysRemaining = timeRemaining.Days;
+                                        remainingText = $"{daysRemaining} days remaining";
+                                        cssClass = "text-success font-weight-bold";
+                                    }
+                                    else if (timeRemaining.TotalDays == 0)
+                                    {
+                                        remainingText = "Due Today!";
+                                        cssClass = "text-warning font-weight-bold";
+                                    }
+                                    else
+                                    {
+                                        int daysOverdue = Math.Abs(timeRemaining.Days);
+                                        remainingText = $"{daysOverdue} days overdue";
+                                        cssClass = "text-danger font-weight-bold";
+                                    }
+                                }
+                                <tr>
+                                    <td><input type="checkbox" name="selectedTasks" value="@task.Id" /></td>
+                                    <td>@task.Description</td>
+                                    <td class="text-center">@task.Category.Name</td>
+                                    <td class="@cssClass text-center">@task.Duedate?.ToShortDateString()</td>
+                                    <td class="@cssClass text-center">@task.Status.StatusName</td>
+                                    <td class="@cssClass text-center">
+                                        @remainingText
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    <a asp-action="Add" class="btn btn-primary">Add New Task</a>
+                    <button type="submit" class="btn btn-danger" id="deleteButton">Delete Task</button>
+                </form>
+                <script>
+                    document.getElementById('deleteForm').addEventListener('submit', function(e) {
+                        var selected = document.querySelectorAll('input[name="selectedTasks"]:checked').length;
+
+                        if (selected === 0)
+                        {
+                            alert('กรุณาเลือก Task ที่ต้องการลบ');
+                            e.preventDefault();
+                            return;
+                        }
+
+                        if (!confirm('คุณแน่ใจหรือไม่ว่าต้องการลบ Task ที่เลือก ' + selected + ' รายการ?'))
+                        {
+                            e.preventDefault();
+                        }
+                    });
+                </script>
+            </div>
+        </div>
+    </div>
+</section>

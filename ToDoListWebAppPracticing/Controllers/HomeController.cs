@@ -1,6 +1,7 @@
-using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Diagnostics;
 using ToDoListWebAppPracticing.Models;
 
 namespace ToDoListWebAppPracticing.Controllers
@@ -9,9 +10,9 @@ namespace ToDoListWebAppPracticing.Controllers
     {
         private ToDoListDbContext dbContext = null!;
 
-        public HomeController(ToDoListDbContext dbCxt)
+        public HomeController(ToDoListDbContext dbCtx)
         {
-           dbContext = dbCxt ?? throw new ArgumentNullException(nameof(dbCxt));
+           dbContext = dbCtx ?? throw new ArgumentNullException(nameof(dbCtx));
         }
 
         public IActionResult Index(string id)
@@ -23,11 +24,9 @@ namespace ToDoListWebAppPracticing.Controllers
             ViewBag.Statuses = dbContext.Statuses.ToList() ?? new List<Status>();
             ViewBag.DueFilterValues = Filter.DueFilterValues;
 
-            IQueryable<ToDoListDbContext> query = (IQueryable<ToDoListDbContext>)dbContext.ToDoLists
-                .Include(t => t.Category)
-                .Include(t => t.Status);
+            IQueryable<ToDoListItems> query = dbContext.ToDoLists.Include(t => t.Category).Include(t => t.Status);
 
-            if (filter.IsCategory) { query = query.Where(t => t.Category == filter.CategoryId); }
+            if (filter.IsCategory) { query = query.Where(t => t.CategoryId == filter.CategoryId); }
 
             if (filter.IsStatus) { query = query.Where(t => t.StatusId == filter.StatusId); }
             
@@ -35,32 +34,84 @@ namespace ToDoListWebAppPracticing.Controllers
             {
                 if (filter.IsPast)
                 {
-                    query = query.Where(t => t.DueDate < DateTime.Today);
+                    query = query.Where(t => t.Duedate < DateTime.Today);
                 }
                 else if (filter.IsToday)
                 {
-                    query = query.Where(t => t.DueDate == DateTime.Today);
+                    query = query.Where(t => t.Duedate == DateTime.Today);
                 }
                 else if (filter.IsFuture)
                 {
-                    query = query.Where(t => t.DueDate > DateTime.Today);
+                    query = query.Where(t => t.Duedate > DateTime.Today);
                 }
             }
 
-            var tasks = query.OrderBy(t => t.DueDate).ToList();
+            var tasks = query.OrderBy(t => t.Duedate).ToList();
 
             return View(tasks);
         }
 
-        public IActionResult Privacy()
+        public IActionResult Add()
         {
-            return View();
+            ViewBag.Categories = dbContext.Categories.ToList() ?? new List<Category>();
+            ViewBag.Statuses = dbContext.Statuses.ToList() ?? new List<Status>();
+
+            var tasks = new ToDoListItems { StatusId = "open" };
+            return View(tasks);
         }
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Add(ToDoListItems tasks)
         {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            if (ModelState.IsValid)
+            {
+                dbContext.ToDoLists.Add(tasks);
+                dbContext.SaveChanges();
+                return RedirectToAction("Index");
+            }
+            else
+            {
+                ViewBag.Categories = dbContext.Categories.ToList();
+                ViewBag.Statuses = dbContext.Statuses.ToList();
+                return View(tasks);
+            }
+        }
+
+        public IActionResult Filters(string[] filter)
+        {
+            string id = string.Join("-", filter);
+            return RedirectToAction("Index", new { ID = id });
+        }
+
+        [HttpPost]
+        public IActionResult MarkComplete([FromRoute] string id, ToDoListItems selected)
+        {
+            var task = dbContext.ToDoLists.Find(selected.Id);
+            if (task != null)
+            {
+                task.StatusId = "closed";
+                dbContext.SaveChanges();
+            }
+            return RedirectToAction("Index", new { ID = id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult DeleteSelected(string id, int[] selectedTasks)
+        {
+            if (selectedTasks != null && selectedTasks.Length > 0)
+            {
+                var tasksToDelete = dbContext.ToDoLists.Where(t => selectedTasks.Contains(t.Id)).ToList();
+
+                if (tasksToDelete.Count > 0)
+                {
+                    dbContext.ToDoLists.RemoveRange(tasksToDelete);
+                    dbContext.SaveChanges();
+                }
+            }
+
+            return RedirectToAction("Index", new { ID = id });
         }
     }
 }
