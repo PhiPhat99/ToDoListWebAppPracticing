@@ -3,14 +3,16 @@
 <section>
 	<div class="container section-padding">
 		<div class="row p-5 border rounded">
-			<h2>New Task</h2>
-
 			<div asp-validation-summary="All" class="text-danger"></div>
-
-			<form asp-action="Add" method="post">
+			@{
+				string formAction = (Model?.Id > 0) ? "Edit" : "Add";
+			}
+			<form asp-controller="Home" asp-action="@formAction" method="post">
+				<input type="hidden" asp-for="Id" />
 				<div class="mb-3">
 					<label asp-for="Description" class="form-label">Description</label>
 					<input asp-for="Description" class="form-control" placeholder="เขียนคำอธิบายงาน" />
+					<span asp-validation-for="Description" class="text-danger"></span>
 				</div>
 
 				<div class="mb-3">
@@ -18,20 +20,25 @@
 					<select asp-for="CategoryId" class="form-select" asp-items="@(new SelectList(ViewBag.Categories, "CategoryId", "Name"))">
 						<option value="">เลือกหมวดหมู่ของงาน</option>
 					</select>
+					<span asp-validation-for="CategoryId" class="text-danger"></span>
 				</div>
 
 				<div class="mb-3">
 					<label asp-for="Duedate" class="form-label">Due Date</label>
 					<input asp-for="Duedate" class="form-control" type="date" placeholder="เลือกวันที่กำหนด" />
+					<span asp-validation-for="Duedate" class="text-danger"></span>
 				</div>
 
 				<div class="mb-3">
 					<label asp-for="StatusId" class="form-label">Status</label>
 					<select asp-for="StatusId" class="form-select" asp-items="@(new SelectList(ViewBag.Statuses, "StatusId", "StatusName"))">
+						<option value="">เลือกสถานะของงาน</option>
 					</select>
+					<span asp-validation-for="StatusId" class="text-danger"></span>
 				</div>
-
-				<button type="submit" class="btn btn-primary">Add</button>
+				<button type="submit" class="btn btn-primary">
+					@(Model?.Id > 0 ? "Save Changes" : "Add Task")
+				</button>
 				<a asp-action="Index" class="btn btn-danger">Cancel</a>
 			</form>
 		</div>

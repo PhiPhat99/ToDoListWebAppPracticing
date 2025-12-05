@@ -25,9 +25,9 @@
                         </li>
                     </ul>
                 </div>*@
-                <form class="d-flex" role="search">
-                    <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-                    <button class="btn btn-outline-light" type="submit">Search</button>
+                <form class="d-flex" role="search" asp-controller="Home" asp-action="Index" method="get">
+                    <input class="form-control me-2" type="search" placeholder="ค้นหางาน" aria-label="Search" name="searchString" value="@ViewBag.SearchString">
+                    <button class="btn btn-outline-light" type="submit">ค้นหา</button>
                 </form>
             </div>
         </nav>

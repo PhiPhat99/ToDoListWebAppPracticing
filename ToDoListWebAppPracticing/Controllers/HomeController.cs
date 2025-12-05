@@ -15,16 +15,23 @@ namespace ToDoListWebAppPracticing.Controllers
            dbContext = dbCtx ?? throw new ArgumentNullException(nameof(dbCtx));
         }
 
-        public IActionResult Index(string id)
+        public IActionResult Index(string id, string? searchString)
         {
             var filter = new Filter(id);
             ViewBag.Filter = filter;
+            IQueryable<ToDoListItems> query = dbContext.ToDoLists.Include(t => t.Category).Include(t => t.Status);
 
             ViewBag.Categories = dbContext.Categories.ToList() ?? new List<Category>();
             ViewBag.Statuses = dbContext.Statuses.ToList() ?? new List<Status>();
             ViewBag.DueFilterValues = Filter.DueFilterValues;
 
-            IQueryable<ToDoListItems> query = dbContext.ToDoLists.Include(t => t.Category).Include(t => t.Status);
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                string lowerSearch = searchString.ToLower();
+                query = query.Where(t => t.Description.ToLower().Contains(lowerSearch));
+
+                ViewBag.SearchString = searchString;
+            }
 
             if (filter.IsCategory) { query = query.Where(t => t.CategoryId == filter.CategoryId); }
 
@@ -66,6 +73,8 @@ namespace ToDoListWebAppPracticing.Controllers
         {
             if (ModelState.IsValid)
             {
+                // ต้องมั่นใจว่า Id = 0 สำหรับ Add ใหม่
+                tasks.Id = 0;
                 dbContext.ToDoLists.Add(tasks);
                 dbContext.SaveChanges();
                 return RedirectToAction("Index");
@@ -76,6 +85,59 @@ namespace ToDoListWebAppPracticing.Controllers
                 ViewBag.Statuses = dbContext.Statuses.ToList();
                 return View(tasks);
             }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Edit(ToDoListItems tasks)
+        {
+            string filterId = TempData["currentFilterId"]?.ToString() ?? "all-all-all";
+            TempData["currentFilterId"] = filterId;
+            ModelState.Remove("Id");
+
+            if (ModelState.IsValid)
+            {
+                if (tasks.Id > 0)
+                {
+                    dbContext.ToDoLists.Update(tasks);
+                    dbContext.SaveChanges();
+                    TempData.Remove("currentFilterId");
+                    return RedirectToAction("Index", new { ID = filterId });
+                }
+
+                ModelState.AddModelError("", "ไม่พบ ID ของรายการที่ต้องการแก้ไข");
+            }
+
+            ViewBag.Categories = dbContext.Categories.ToList();
+            ViewBag.Statuses = dbContext.Statuses.ToList();
+            return View("Add", tasks);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult EditSelected(string id, int[] selectedTasks)
+        {
+            if (selectedTasks == null || selectedTasks.Length != 1)
+            {
+                TempData["message"] = "กรุณาเลือก Task ที่ต้องการแก้ไขเพียง 1 รายการ";
+                return RedirectToAction("Index", new { ID = id });
+            }
+
+            int taskIdToEdit = selectedTasks[0];
+            var taskToEdit = dbContext.ToDoLists.Include(t => t.Category).Include(t => t.Status).FirstOrDefault(t => t.Id == taskIdToEdit);
+
+            if (taskToEdit == null)
+            {
+                TempData["message"] = "ไม่พบ Task ที่ระบุ";
+                return RedirectToAction("Index", new { ID = id });
+            }
+
+            TempData["currentFilterId"] = id;
+            ViewBag.Categories = dbContext.Categories.ToList();
+            ViewBag.Statuses = dbContext.Statuses.ToList();
+
+            ModelState.Remove("id");
+            return View("Add", taskToEdit);
         }
 
         public IActionResult Filters(string[] filter)

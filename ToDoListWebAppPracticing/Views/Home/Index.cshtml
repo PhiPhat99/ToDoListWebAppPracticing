@@ -95,23 +95,60 @@
                         </tbody>
                     </table>
                     <a asp-action="Add" class="btn btn-primary">Add New Task</a>
+                    <button type="submit" class="btn btn-info" id="editButton">Edit Task</button>
                     <button type="submit" class="btn btn-danger" id="deleteButton">Delete Task</button>
                 </form>
                 <script>
-                    document.getElementById('deleteForm').addEventListener('submit', function(e) {
-                        var selected = document.querySelectorAll('input[name="selectedTasks"]:checked').length;
+                    document.addEventListener('DOMContentLoaded', function() 
+                    {
+                        const form = document.getElementById('deleteForm');
+                        const deleteButton = document.getElementById('deleteButton');
+                        const editButton = document.getElementById('editButton');
 
-                        if (selected === 0)
-                        {
-                            alert('กรุณาเลือก Task ที่ต้องการลบ');
-                            e.preventDefault();
-                            return;
-                        }
+                        if (!form) return;
 
-                        if (!confirm('คุณแน่ใจหรือไม่ว่าต้องการลบ Task ที่เลือก ' + selected + ' รายการ?'))
+                        form.addEventListener('submit', function(e) 
                         {
-                            e.preventDefault();
-                        }
+                            const selectedCheckboxes = form.querySelectorAll('input[name="selectedTasks"]:checked');
+                            const selectedCount = selectedCheckboxes.length;
+
+                            form.action = '@Url.Action("DeleteSelected", "Home", new { id = ViewBag.Filter.FilterString })';
+
+                            const submitter = e.submitter;
+
+                            if (submitter && submitter.id === 'deleteButton')
+                            {
+                                if (selectedCount === 0) 
+                                {
+                                    alert('กรุณาเลือก Task ที่ต้องการลบ');
+                                    e.preventDefault();
+                                    return;
+                                }
+
+                                if (!confirm('คุณแน่ใจหรือไม่ว่าต้องการลบ Task ที่เลือก ' + selectedCount + ' รายการ?')) { e.preventDefault(); }
+                            }
+
+                            else if (submitter && submitter.id === 'editButton')
+                            {
+                                e.preventDefault();
+
+                                if (selectedCount === 0) 
+                                {
+                                    alert('กรุณาเลือก Task ที่ต้องการแก้ไขเพียง 1 รายการ');
+                                    return;
+                                }
+
+                                if (selectedCount > 1) 
+                                {
+                                    alert('กรุณาเลือก Task ที่ต้องการแก้ไขเพียง 1 รายการเท่านั้น');
+                                    return;
+                                }
+
+                                form.action = '@Url.Action("EditSelected", "Home", new { id = ViewBag.Filter.FilterString })';
+                                form.method = 'post';
+                                form.submit();
+                            }
+                        });
                     });
                 </script>
             </div>
